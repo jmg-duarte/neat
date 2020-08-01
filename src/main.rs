@@ -18,6 +18,9 @@ struct Opts {
     config: String,
     /// Target folder to be organized.
     target: String,
+    /// Wether the globs are case sensitive or not.
+    #[clap(short = "i")]
+    case_sensitive: bool,
 }
 
 #[derive(Deserialize)]
@@ -33,17 +36,22 @@ impl fmt::Display for Config {
     }
 }
 
+fn create_folders(path: &Path) -> Result<(), String> {
+    match (path.exists(), path.is_dir()) {
+        (false, _) => fs::create_dir_all(&path).map_err(|err| err.to_string()),
+        (true, false) => Err(format!(
+            "file exists with folder name {}",
+            path.to_str().unwrap()
+        )),
+        _ => Ok(()),
+    }
+}
+
 fn execute_mapping(target: &String, mappings: &HashMap<String, String>) {
     let folder = mappings.get("folder").unwrap();
     let glob_str = mappings.get("glob").unwrap();
     let folder_path = Path::new(folder);
-    match (folder_path.exists(), folder_path.is_dir()) {
-        (false, _) => {
-            fs::create_dir_all(&folder_path).expect("something went wrong creating the folder")
-        }
-        (true, false) => panic!("file exists with folder name {}", folder),
-        _ => {}
-    }
+    create_folders(folder_path);
     let mut target_glob = target.clone();
     if !target_glob.ends_with("/") {
         target_glob.push('/');
@@ -68,30 +76,32 @@ fn execute_mapping(target: &String, mappings: &HashMap<String, String>) {
     }
 }
 
-fn main() {
-    let opts = Opts::parse();
-    let conf = fs::read(opts.config).expect("something failed while reading the configuration");
-    let toml_conf: Config =
-        toml::from_slice(conf.as_slice()).expect("something went wrong parsing the config");
-
-    println!("{}", toml_conf);
-
-    let mappings = toml_conf.mappings;
+fn run(conf: Config, opts: Opts) -> Result<(), String> {
+    let mappings = conf.mappings;
     for (idx, m) in mappings.iter().enumerate() {
         match (m.get("folder"), m.get("glob")) {
-            (Some(_), Some(_)) => execute_mapping(&opts.target, &m),
-            (None, Some(_)) => panic!(
-                "mapping ({}) does not contain the required fields 'folder'",
+            (Some(_), Some(_)) => Ok(execute_mapping(&opts.target, &m)),
+            (None, Some(_)) => Err(format!(
+                "Mapping [{}] does not contain the required field \"folder\"",
                 idx
-            ),
-            (Some(_), None) => panic!(
-                "mapping ({}) does not contain the required fields 'glob'",
+            )),
+            (Some(_), None) => Err(format!(
+                "Mapping [{}] does not contain the required field \"glob\"",
                 idx
-            ),
-            _ => panic!(
-                "mapping ({}) does not contain the required fields 'folder' and 'glob'",
+            )),
+            _ => Err(format!(
+                "Mapping [{}] does not contain the required fields \"folder\" and \"glob\"",
                 idx
-            ),
-        }
+            )),
+        }?;
     }
+    Ok(())
+}
+
+fn main() -> Result<(), String> {
+    let opts = Opts::parse();
+    let conf = fs::read(&opts.config).expect("something failed while reading the configuration");
+    let toml_conf: Config =
+        toml::from_slice(conf.as_slice()).expect("something went wrong parsing the config");
+    run(toml_conf, opts)
 }
