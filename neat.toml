@@ -1,0 +1,8 @@
+[[mappings]]
+folder = "RAW"
+glob = "*.raf"
+
+[[mappings]]
+folder = "JPG"
+glob = "*.jpg"
+name = "{{ORIGINAL}}_{{DATE}}.{{EXT}}"
