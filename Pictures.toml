@@ -1,0 +1,7 @@
+[[mapping]]
+glob="Screenshot*"
+folder="screenshots"
+
+[[mapping]]
+glob="*unsplash.*"
+folder="Unsplash"

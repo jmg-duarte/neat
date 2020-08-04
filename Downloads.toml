@@ -1,0 +1,11 @@
+[[mapping]]
+folder = "PDF"
+glob = "*.pdf"
+
+[[mapping]]
+folder = "/home/jmgduarte/Pictures"
+glob = "*.jpg"
+
+[[mapping]]
+folder = "/home/jmgduarte/Pictures"
+glob = "*.png"

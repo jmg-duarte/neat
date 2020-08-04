@@ -1,8 +1,12 @@
-[[mappings]]
-folder = "RAW"
-glob = "*.raf"
+# [[mapping]]
+# folder = "RAW"
+# glob = "./**/*.raf"
 
-[[mappings]]
+[[mapping]]
 folder = "JPG"
-glob = "*.jpg"
-name = "{{ORIGINAL}}_{{DATE}}.{{EXT}}"
+glob = "./**/*.jpg"
+
+# [[mapping]]
+# folder = "JPG"
+# glob = "/*.jpg"
+# name = "{{ORIGINAL}}_{{DATE}}.{{EXT}}"
