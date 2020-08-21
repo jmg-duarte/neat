@@ -61,3 +61,8 @@ FLAGS:
 OPTIONS:
     -c, --config <config>    The path to the configuration file [default: neat.toml]
 ```
+
+## Contributing & Issues
+If you have a feature you'd like to see in **neat** please submit an issue.
+
+If you'd like to contribute feel free to dive in and help!
