@@ -1,16 +1,19 @@
+#![deny(rust_2018_idioms)]
+
 pub mod config;
 pub mod error;
 
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::fmt::Debug;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use colored::*;
 use glob::{glob_with, MatchOptions};
 
-use crate::Opts;
 use crate::neat::config::Mapping;
+use crate::Opts;
 
 /// Create the folder from `path`, it also creates any missing folders.
 /// For instance, the path `/a/b/c` will create the folder `c` as well as folders `a` and `b` if they do not exist.
@@ -94,19 +97,48 @@ fn execute_mapping(opts: &crate::Opts, mappings: &HashMap<String, String>) -> an
     Ok(())
 }
 
-fn exec(opts: &Opts, mapping: &Mapping) {
+fn exec(opts: &Opts, mapping: &Mapping) -> Result<()> {
     let target = opts.target.as_str();
     let case_sensitive = opts.case_sensitive;
     let match_opts = get_match_options(case_sensitive);
     let mut folder_path = PathBuf::from(&target);
     folder_path.push(&mapping.folder);
     println!("{}: {:?}", "folder_path".blue(), folder_path);
+    let target_glob = build_glob(&target, &mapping.glob);
+    println!("{}: {}", "glob".blue(), target_glob);
+    let paths = glob_with(&target_glob, match_opts)
+        .map_err(|source| error::NeatError::Pattern(source))?;
+    let op = get_move_op::<PathBuf, PathBuf>(opts.dry_run);
+    for path in paths {
+        let p = path.map_err(|source| error::NeatError::Glob(source))?;
+        let fp = build_file_path(folder_path.as_path(), p.as_path());
+        op(p, fp)?;
+    }
+    Ok(())
 }
 
-pub(crate) fn run(conf: config::Config, opts: crate::Opts) -> anyhow::Result<()> {
+fn get_move_op<P, Q>(dry_run: bool) -> impl Fn(P, Q) -> Result<()>
+where
+    P: AsRef<Path> + Debug,
+    Q: AsRef<Path> + Debug,
+{
+    if dry_run {
+        |from, to| {
+            println!("moving {:?} to {:?}", from, to);
+            Ok(())
+        }
+    } else {
+        |from, to| {
+            fs::rename(from, to).map_err(|source| error::NeatError::Io(source))?;
+            Ok(())
+        }
+    }
+}
+
+pub(crate) fn run(conf: config::Config, opts: crate::Opts) -> Result<()> {
     let mappings = conf.mapping;
     for (idx, m) in mappings.iter().enumerate() {
-        exec(&opts, m);
+        exec(&opts, m)?;
     }
     // for (idx, m) in mappings.iter().enumerate() {
     //     match (m.get("folder"), m.get("glob")) {

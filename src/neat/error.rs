@@ -10,4 +10,10 @@ pub enum NeatError<'a> {
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Pattern(#[from] glob::PatternError),
+
+    #[error(transparent)]
+    Glob(#[from] glob::GlobError),
 }
