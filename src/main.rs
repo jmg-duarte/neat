@@ -3,6 +3,7 @@ mod neat;
 use std::fs;
 
 use clap::Clap;
+use anyhow::{Context, Result};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &'static str = env!("CARGO_PKG_AUTHORS");
@@ -22,10 +23,10 @@ struct Opts {
     dry_run: bool,
 }
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     let opts = Opts::parse();
-    let conf = fs::read(&opts.config).expect("something failed while reading the configuration");
+    let conf = fs::read(&opts.config).context("An error occurred while reading the configuration file")?;
     let toml_conf: neat::config::Config =
-        toml::from_slice(conf.as_slice()).expect("something went wrong parsing the config");
+        toml::from_slice(conf.as_slice()).context("An error occurred while parsing the configuration file")?;
     neat::run(toml_conf, opts)
 }

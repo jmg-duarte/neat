@@ -9,6 +9,9 @@ use anyhow::anyhow;
 use colored::*;
 use glob::{glob_with, MatchOptions};
 
+use crate::Opts;
+use crate::neat::config::Mapping;
+
 /// Create the folder from `path`, it also creates any missing folders.
 /// For instance, the path `/a/b/c` will create the folder `c` as well as folders `a` and `b` if they do not exist.
 fn create_folders(path: &Path) -> anyhow::Result<()> {
@@ -91,24 +94,36 @@ fn execute_mapping(opts: &crate::Opts, mappings: &HashMap<String, String>) -> an
     Ok(())
 }
 
+fn exec(opts: &Opts, mapping: &Mapping) {
+    let target = opts.target.as_str();
+    let case_sensitive = opts.case_sensitive;
+    let match_opts = get_match_options(case_sensitive);
+    let mut folder_path = PathBuf::from(&target);
+    folder_path.push(&mapping.folder);
+    println!("{}: {:?}", "folder_path".blue(), folder_path);
+}
+
 pub(crate) fn run(conf: config::Config, opts: crate::Opts) -> anyhow::Result<()> {
     let mappings = conf.mapping;
     for (idx, m) in mappings.iter().enumerate() {
-        match (m.get("folder"), m.get("glob")) {
-            (Some(_), Some(_)) => execute_mapping(&opts, &m),
-            (None, Some(_)) => Err(anyhow!(error::NeatError::MissingFields {
-                idx: idx,
-                fields: vec!["folder"]
-            })),
-            (Some(_), None) => Err(anyhow!(error::NeatError::MissingFields {
-                idx: idx,
-                fields: vec!["glob"]
-            })),
-            _ => Err(anyhow!(error::NeatError::MissingFields {
-                idx: idx,
-                fields: vec!["folder", "glob"]
-            })),
-        }?;
+        exec(&opts, m);
     }
+    // for (idx, m) in mappings.iter().enumerate() {
+    //     match (m.get("folder"), m.get("glob")) {
+    //         (Some(_), Some(_)) => execute_mapping(&opts, &m),
+    //         (None, Some(_)) => Err(anyhow!(error::NeatError::MissingFields {
+    //             idx: idx,
+    //             fields: vec!["folder"]
+    //         })),
+    //         (Some(_), None) => Err(anyhow!(error::NeatError::MissingFields {
+    //             idx: idx,
+    //             fields: vec!["glob"]
+    //         })),
+    //         _ => Err(anyhow!(error::NeatError::MissingFields {
+    //             idx: idx,
+    //             fields: vec!["folder", "glob"]
+    //         })),
+    //     }?;
+    // }
     Ok(())
 }

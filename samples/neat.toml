@@ -1,6 +1,6 @@
-# [[mapping]]
-# folder = "RAW"
-# glob = "./**/*.raf"
+[[mapping]]
+folder = "RAW"
+glob = "./**/*.raf"
 
 [[mapping]]
 folder = "JPG"
