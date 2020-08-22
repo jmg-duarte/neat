@@ -21,6 +21,8 @@ struct Opts {
     case_sensitive: bool,
     #[clap(short = "n", long)]
     dry_run: bool,
+    #[clap(short, long, parse(from_occurrences))]
+    verbose: u8,
 }
 
 fn main() -> Result<()> {
