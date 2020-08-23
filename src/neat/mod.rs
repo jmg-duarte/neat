@@ -74,7 +74,7 @@ fn exec(opts: &Opts, mapping: &Mapping) -> Result<()> {
     // println!("{}: {}", "glob".blue(), target_glob);
     let paths =
         glob_with(&target_glob, match_opts).map_err(|source| error::NeatError::Pattern(source))?;
-    let op = get_move_op::<PathBuf, PathBuf>(opts.dry_run);
+    let op = get_move_op::<PathBuf, PathBuf>(opts.dry_run, opts.verbose);
     for path in paths {
         let from = path.map_err(|source| error::NeatError::Glob(source))?;
         let to = build_file_path(folder_path.as_path(), from.as_path());
@@ -83,18 +83,22 @@ fn exec(opts: &Opts, mapping: &Mapping) -> Result<()> {
     Ok(())
 }
 
-fn get_move_op<P, Q>(dry_run: bool) -> impl Fn(P, Q) -> Result<()>
+fn get_move_op<P, Q>(dry_run: bool, verbose: u8) -> impl Fn(P, Q) -> Result<()>
 where
     P: AsRef<Path> + Debug,
     Q: AsRef<Path> + Debug,
 {
-    if dry_run {
-        |from, to| {
+    match (dry_run, verbose) {
+        (true, _) => |from, to| {
             println!("moving {:?} to {:?}", from, to);
             Ok(())
-        }
-    } else {
-        |from, to| {
+        },
+        (false, 0) => |from, to| {
+            fs::rename(from, to).map_err(|source| error::NeatError::Io(source))?;
+            Ok(())
+        },
+        (false, _) => |from, to| {
+            println!("moving {:?} to {:?}", from, to);
             fs::rename(from, to).map_err(|source| error::NeatError::Io(source))?;
             Ok(())
         }
