@@ -10,6 +10,9 @@ pub enum NeatError {
         #[source]
         err: std::io::Error,
     },
+    
+    #[error("Failed to read filename {0}")]
+    Filename(PathBuf),
 
     #[error(transparent)]
     Io(#[from] std::io::Error),

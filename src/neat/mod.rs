@@ -2,84 +2,29 @@
 
 pub mod config;
 pub mod error;
+pub mod matcher;
 
 use std::fmt::Debug;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
-use colored::*;
-use glob::{glob_with, MatchOptions};
-
 use crate::neat::config::Mapping;
+use crate::neat::error::NeatError;
 use crate::Opts;
 
-/// Create the folder from `path`, it also creates any missing folders.
-/// For instance, the path `/a/b/c` will create the folder `c` as well as folders `a` and `b` if they do not exist.
-fn create_folders(path: &Path, dry_run: bool, verbose: u8) -> Result<()> {
-    if dry_run {
-        println!("create folder {:?}", path);
-    } else {
-        if verbose > 0 {
-            println!("create folder {:?}", path);
+fn build_file_path(folder: &Path, file: &Path) -> Result<PathBuf, NeatError> {
+    let file_name = file.file_name().and_then(|os_str| os_str.to_str());
+    match file_name {
+        Some(fname) => {
+            let mut folder_path_buf = folder.to_path_buf();
+            folder_path_buf.push(fname);
+            Ok(folder_path_buf)
         }
-        fs::create_dir_all(&path).map_err(|e| error::NeatError::NamingConflict {
-            file: path.to_path_buf(),
-            err: e,
-        })?;
+        None => Err(NeatError::Filename(file.to_path_buf())),
     }
-    Ok(())
 }
 
-fn get_match_options(case_sensitive: bool) -> MatchOptions {
-    let mut match_opts = MatchOptions::new();
-    match_opts.case_sensitive = case_sensitive;
-    match_opts
-}
-
-fn build_glob(folder: &str, glob: &str) -> String {
-    let mut result = folder.to_owned();
-    if !result.ends_with("/") && !glob.starts_with("/") {
-        result.push('/');
-    }
-    result.push_str(glob);
-    result
-}
-
-fn build_file_path(folder: &Path, file: &Path) -> PathBuf {
-    let file_name = file
-        .file_name()
-        .and_then(|os_str| os_str.to_str())
-        .expect("Failed to read the filename");
-    let mut folder_path_buf = folder.to_path_buf();
-    folder_path_buf.push(file_name);
-    folder_path_buf
-}
-
-fn exec(opts: &Opts, mapping: &Mapping) -> Result<()> {
-    let target = opts.target.as_str();
-    let case_sensitive = opts.case_sensitive;
-    let match_opts = get_match_options(case_sensitive);
-    let mut folder_path = PathBuf::from(&target);
-    folder_path.push(&mapping.folder);
-    create_folders(&folder_path, opts.dry_run, opts.verbose)?;
-    let target_glob = build_glob(&target, &mapping.glob);
-    if opts.verbose > 1 {
-        println!("{}: {:?}", "folder_path".blue(), folder_path);
-        println!("{}: {}", "glob".blue(), target_glob);
-    }
-    let paths =
-        glob_with(&target_glob, match_opts).map_err(|source| error::NeatError::Pattern(source))?;
-    let op = get_move_op::<PathBuf, PathBuf>(opts.dry_run, opts.verbose);
-    for path in paths {
-        let from = path.map_err(|source| error::NeatError::Glob(source))?;
-        let to = build_file_path(folder_path.as_path(), from.as_path());
-        op(from, to)?;
-    }
-    Ok(())
-}
-
-fn get_move_op<P, Q>(dry_run: bool, verbose: u8) -> impl Fn(P, Q) -> Result<()>
+fn get_move_op<P, Q>(dry_run: bool, verbose: u8) -> impl Fn(P, Q) -> Result<(), NeatError>
 where
     P: AsRef<Path> + Debug,
     Q: AsRef<Path> + Debug,
@@ -101,10 +46,19 @@ where
     }
 }
 
-pub(crate) fn run(conf: config::Config, opts: crate::Opts) -> Result<()> {
-    let mappings = conf.mapping;
-    for m in mappings {
-        exec(&opts, &m)?;
+pub(crate) fn exec(opts: &Opts, mapping: &Mapping) -> Result<(), NeatError> {
+    let matcher = matcher::Matcher::new(
+        opts.target.as_str(),
+        &mapping.folder,
+        &mapping.glob,
+        opts.case_sensitive,
+    );
+    let paths = matcher.run(opts.dry_run, opts.verbose)?;
+    let op = get_move_op::<PathBuf, PathBuf>(opts.dry_run, opts.verbose);
+    for path in paths {
+        let file = path.map_err(|source| error::NeatError::Glob(source))?;
+        let to = build_file_path(matcher.to.as_path(), file.as_path())?;
+        op(file, to)?;
     }
     Ok(())
 }

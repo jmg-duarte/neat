@@ -31,5 +31,13 @@ fn main() -> Result<()> {
         fs::read(&opts.config).context("An error occurred while reading the configuration file")?;
     let toml_conf: neat::config::Config = toml::from_slice(conf.as_slice())
         .context("An error occurred while parsing the configuration file")?;
-    neat::run(toml_conf, opts)
+    run(toml_conf, opts)
+}
+
+pub(crate) fn run(conf: neat::config::Config, opts: crate::Opts) -> Result<()> {
+    let mappings = conf.mapping;
+    for m in mappings {
+        neat::exec(&opts, &m)?;
+    }
+    Ok(())
 }
