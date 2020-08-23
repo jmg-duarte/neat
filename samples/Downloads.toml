@@ -9,3 +9,19 @@ glob = "*.jpg"
 [[mapping]]
 folder = "/home/jmgduarte/Pictures"
 glob = "*.png"
+
+[[mapping]]
+folder = "compressed"
+glob = "*.zip"
+
+[[mapping]]
+folder = "compressed"
+glob = "*.tar*"
+
+[[mapping]]
+folder = "packages"
+glob = "*.deb"
+
+[[mapping]]
+folder = "scripts"
+glob = "*.sh"

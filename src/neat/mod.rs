@@ -16,25 +16,19 @@ use crate::Opts;
 
 /// Create the folder from `path`, it also creates any missing folders.
 /// For instance, the path `/a/b/c` will create the folder `c` as well as folders `a` and `b` if they do not exist.
-fn create_folders(path: &Path, dry_run: bool) -> Result<()> {
+fn create_folders(path: &Path, dry_run: bool, verbose: u8) -> Result<()> {
     if dry_run {
-        println!("creating {:?}", path);
-        Ok(())
+        println!("create folder {:?}", path);
     } else {
-        match (path.exists(), path.is_dir()) {
-            (false, _) => {
-                if let Err(e) = fs::create_dir_all(&path) {
-                    Err(anyhow!(error::NeatError::Io(e)))
-                } else {
-                    Ok(())
-                }
-            }
-            (true, false) => Err(anyhow!(error::NeatError::NamingConflict(String::from(
-                path.to_str().unwrap()
-            )))),
-            (_, _) => Ok(()),
+        if verbose > 0 {
+            println!("create folder {:?}", path);
         }
+        fs::create_dir_all(&path).map_err(|e| error::NeatError::NamingConflict {
+            file: path.to_path_buf(),
+            err: e,
+        })?;
     }
+    Ok(())
 }
 
 fn get_match_options(case_sensitive: bool) -> MatchOptions {
@@ -68,7 +62,7 @@ fn exec(opts: &Opts, mapping: &Mapping) -> Result<()> {
     let match_opts = get_match_options(case_sensitive);
     let mut folder_path = PathBuf::from(&target);
     folder_path.push(&mapping.folder);
-    create_folders(&folder_path, opts.dry_run)?;
+    create_folders(&folder_path, opts.dry_run, opts.verbose)?;
     let target_glob = build_glob(&target, &mapping.glob);
     if opts.verbose > 1 {
         println!("{}: {:?}", "folder_path".blue(), folder_path);
