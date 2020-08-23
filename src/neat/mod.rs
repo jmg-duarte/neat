@@ -8,7 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
-// use colored::*;
+use colored::*;
 use glob::{glob_with, MatchOptions};
 
 use crate::neat::config::Mapping;
@@ -69,9 +69,11 @@ fn exec(opts: &Opts, mapping: &Mapping) -> Result<()> {
     let mut folder_path = PathBuf::from(&target);
     folder_path.push(&mapping.folder);
     create_folders(&folder_path, opts.dry_run)?;
-    // println!("{}: {:?}", "folder_path".blue(), folder_path);
     let target_glob = build_glob(&target, &mapping.glob);
-    // println!("{}: {}", "glob".blue(), target_glob);
+    if opts.verbose > 1 {
+        println!("{}: {:?}", "folder_path".blue(), folder_path);
+        println!("{}: {}", "glob".blue(), target_glob);
+    }
     let paths =
         glob_with(&target_glob, match_opts).map_err(|source| error::NeatError::Pattern(source))?;
     let op = get_move_op::<PathBuf, PathBuf>(opts.dry_run, opts.verbose);
@@ -101,7 +103,7 @@ where
             println!("moving {:?} to {:?}", from, to);
             fs::rename(from, to).map_err(|source| error::NeatError::Io(source))?;
             Ok(())
-        }
+        },
     }
 }
 
