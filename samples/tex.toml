@@ -1,0 +1,11 @@
+[[mapping]]
+folder="Chapters/chap1"
+glob="./**/1*.tex"
+
+[[mapping]]
+folder="Chapters/chap2"
+glob="./**/2*.tex"
+
+[[mapping]]
+folder="Chapters/chap3"
+glob="./**/3*.tex"

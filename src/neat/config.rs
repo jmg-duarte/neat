@@ -18,5 +18,5 @@ impl fmt::Display for Config {
 #[derive(Deserialize, Debug)]
 pub(crate) struct Mapping {
     pub glob: String,
-    pub folder: String
+    pub folder: String,
 }

@@ -1,10 +1,14 @@
 [[mapping]]
 folder = "RAW"
-glob = "./**/*.raf"
+glob = "./**/*.raf*"
 
 [[mapping]]
 folder = "JPG"
 glob = "./**/*.jpg"
+
+# [[mapping]]
+# folder = "empty"
+# glob = ".non_existent"
 
 # [[mapping]]
 # folder = "JPG"

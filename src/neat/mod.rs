@@ -8,7 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
-use colored::*;
+// use colored::*;
 use glob::{glob_with, MatchOptions};
 
 use crate::neat::config::Mapping;
