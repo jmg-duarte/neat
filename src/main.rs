@@ -34,7 +34,7 @@ fn main() -> Result<()> {
     run(toml_conf, opts)
 }
 
-pub(crate) fn run(conf: neat::config::Config, opts: crate::Opts) -> Result<()> {
+fn run(conf: neat::config::Config, opts: crate::Opts) -> Result<()> {
     let mappings = conf.mapping;
     for m in mappings {
         neat::exec(&opts, &m)?;
