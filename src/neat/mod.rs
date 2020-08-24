@@ -35,12 +35,12 @@ where
             Ok(())
         },
         (false, 0) => |from, to| {
-            fs::rename(from, to).map_err(|source| error::NeatError::Io(source))?;
+            fs::rename(from, to).map_err(|e| error::NeatError::Io(e))?;
             Ok(())
         },
         (false, _) => |from, to| {
             println!("moving {:?} to {:?}", from, to);
-            fs::rename(from, to).map_err(|source| error::NeatError::Io(source))?;
+            fs::rename(from, to).map_err(|e| error::NeatError::Io(e))?;
             Ok(())
         },
     }
@@ -56,7 +56,7 @@ pub(crate) fn exec(opts: &Opts, mapping: &Mapping) -> Result<(), NeatError> {
     let paths = matcher.run(opts.dry_run, opts.verbose)?;
     let op = get_move_op::<PathBuf, PathBuf>(opts.dry_run, opts.verbose);
     for path in paths {
-        let file = path.map_err(|source| error::NeatError::Glob(source))?;
+        let file = path.map_err(|e| error::NeatError::Glob(e))?;
         let to = build_file_path(matcher.to.as_path(), file.as_path())?;
         op(file, to)?;
     }
