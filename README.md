@@ -43,7 +43,7 @@ To perform a dry run use the `-n` or `--dry-run` flags.
 For more information use `neat -h`, which outputs the following:
 
 ```
-neat 0.1.0
+neat 0.1.1
 José Duarte <jmg.duarte@campus.fct.unl.pt>
 
 USAGE:
@@ -54,8 +54,9 @@ ARGS:
 
 FLAGS:
     -i               Wether the globs are case sensitive or not
-    -n, --dry-run    
+    -n, --dry-run    Run neat without applying any changes
     -h, --help       Prints help information
+    -v, --verbose    Print information as neat works. Verbosity levels can be stacked by adding more v's
     -V, --version    Prints version information
 
 OPTIONS:

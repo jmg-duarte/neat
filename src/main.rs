@@ -19,8 +19,11 @@ struct Opts {
     /// Wether the globs are case sensitive or not.
     #[clap(short = "i")]
     case_sensitive: bool,
+    /// Run neat without applying any changes.
     #[clap(short = "n", long)]
     dry_run: bool,
+    /// Print information as neat works.
+    /// Verbosity levels can be stacked by adding more v's.
     #[clap(short, long, parse(from_occurrences))]
     verbose: u8,
 }
